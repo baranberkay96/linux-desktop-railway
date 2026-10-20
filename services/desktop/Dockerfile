@@ -40,7 +40,6 @@ RUN bash /tmp/railway-desktop/patch-image.sh \
  && chmod 0755 /usr/local/bin/railway-start /usr/local/bin/railway-apt-restore
 
 EXPOSE 3000
-VOLUME /config
 
 # Railway runs its own init (podman-init) as PID 1, and the image's /init
 # (s6-overlay 3.2.1.0) refuses to start unless it is PID 1. railway-start
