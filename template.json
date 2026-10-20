@@ -1,0 +1,85 @@
+{
+  "name": "Debian 13 XFCE Linux Desktop in Your Browser",
+  "description": "Full Debian desktop in a browser tab with a persistent home and apps.",
+  "category": "Other",
+  "tags": [
+    "debian",
+    "linux-desktop",
+    "xfce",
+    "remote-desktop",
+    "webtop",
+    "selkies",
+    "chromium",
+    "browser"
+  ],
+  "image": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/debian-linux.svg",
+  "upstream": {
+    "repo": "linuxserver/docker-webtop",
+    "branch": "debian-xfce",
+    "version": "eb802092-ls217",
+    "image": "lscr.io/linuxserver/webtop:debian-xfce-eb802092-ls217@sha256:d925f9c84663fe57735be4defe95a338d32bc37f2e12b9e0f0981e91b6bd0a5d",
+    "base": "ghcr.io/linuxserver/baseimage-selkies:debiantrixie (Selkies 2.0.0, s6-overlay 3.2.1.0)",
+    "checked": "2026-10-20"
+  },
+  "services": {
+    "Desktop": {
+      "icon": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/debian-linux.svg",
+      "source": {
+        "repo": "baranberkay96/linux-desktop-railway",
+        "rootDirectory": "/services/desktop"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/healthz",
+      "healthcheckTimeout": 600,
+      "restartPolicyType": "ON_FAILURE",
+      "restartPolicyMaxRetries": 10,
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": true,
+      "targetPort": 3000,
+      "tcpProxy": null,
+      "volume": {
+        "mountPath": "/config"
+      },
+      "variables": {
+        "PASSWORD": {
+          "defaultValue": "${{secret(32)}}",
+          "description": "Browser login password, generated at deploy (copy it from this variable). Min 12 chars. The desktop does not start without it.",
+          "required": false
+        },
+        "CUSTOM_USER": {
+          "defaultValue": "debian",
+          "description": "Browser login name (letters, digits, . _ @ -). The Linux account inside the desktop is 'abc', with passwordless sudo.",
+          "required": false
+        },
+        "PORT": {
+          "defaultValue": "3000",
+          "description": "Port of the desktop's web server (nginx). The public domain and the healthcheck use it. 3001 and 8082 are used internally.",
+          "required": false
+        },
+        "TZ": {
+          "defaultValue": "Etc/UTC",
+          "description": "Time zone of the desktop clock and apps, e.g. Europe/Istanbul.",
+          "required": false
+        },
+        "TITLE": {
+          "defaultValue": "Debian 13 XFCE Desktop",
+          "description": "Browser tab title of the desktop page.",
+          "required": false
+        },
+        "APT_PACKAGES": {
+          "defaultValue": "",
+          "description": "Optional. Debian packages (space-separated) reinstalled in the background after every redeploy, e.g. 'gimp vlc'.",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "15",
+          "description": "Seconds between stop signal and kill on redeploy, so desktop apps and services shut down cleanly.",
+          "required": false
+        }
+      }
+    }
+  },
+  "buckets": []
+}
