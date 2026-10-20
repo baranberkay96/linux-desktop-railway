@@ -89,13 +89,13 @@ patch_nginx_conf() {
   sed -i -E "s/^worker_processes +[^;]+;$/worker_processes ${NGINX_WORKERS};/" "$NGINX_CONF"
   sed -i -E '/^worker_cpu_affinity /d' "$NGINX_CONF"
   if grep -q -E '^error_log +[^;]+;$' "$NGINX_CONF"; then
-    sed -i -E 's|^error_log +[^;]+;$|error_log stderr;|' "$NGINX_CONF"
+    sed -i -E 's|^error_log +[^;]+;$|error_log stderr crit;|' "$NGINX_CONF"
   else
-    printf 'error_log stderr;\n' >> "$NGINX_CONF"
+    printf 'error_log stderr crit;\n' >> "$NGINX_CONF"
   fi
   require_count "$NGINX_CONF" "^worker_processes ${NGINX_WORKERS};$" 1
   require_count "$NGINX_CONF" '^worker_cpu_affinity ' 0
-  require_count "$NGINX_CONF" '^error_log stderr;$' 1
+  require_count "$NGINX_CONF" '^error_log stderr crit;$' 1
 }
 
 # Renders the patched template the way init-nginx does (default ports,

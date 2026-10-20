@@ -74,6 +74,8 @@ validate_settings() {
     log "CUSTOM_PORT=${CUSTOM_PORT} is ignored: nginx listens on PORT=${PORT}, the port Railway routes to."
   fi
   export PORT CUSTOM_PORT="$PORT"
+  # nginx does the login; Selkies' own basic auth would need the password we remove before it starts.
+  export SELKIES_ENABLE_BASIC_AUTH=false
 
   CUSTOM_USER="${CUSTOM_USER:-$DEFAULT_USER}"
   if [[ ! "$CUSTOM_USER" =~ ^[A-Za-z0-9._@-]{1,64}$ ]]; then
@@ -87,6 +89,10 @@ validate_settings() {
   fi
   if [[ "$PASSWORD" == *$'\n'* ]]; then
     die "PASSWORD must be a single line."
+  fi
+  # openssl passwd silently truncates input longer than 256 bytes; count bytes, not characters.
+  if (( $(printf '%s' "$PASSWORD" | wc -c) > 256 )); then
+    die "PASSWORD is longer than 256 bytes. Use a shorter password."
   fi
 
   # init-nginx removes the IPv6 listener only when DISABLE_IPV6 is set.
@@ -127,7 +133,7 @@ check_volume() {
 report_shared_memory() {
   local want="${DESKTOP_SHM_SIZE:-$DEFAULT_SHM_SIZE}" have_bytes want_bytes
 
-  have_bytes="$(df -P -B1 /dev/shm 2> /dev/null | awk 'NR == 2 { print $2 }')"
+  have_bytes="$(df -P -B1 /dev/shm 2> /dev/null | awk 'NR == 2 { print $2 }' || true)"
   [[ "$have_bytes" =~ ^[0-9]+$ ]] || { log "/dev/shm size unknown."; return 0; }
   case "$(printf '%s' "$want" | tr '[:upper:]' '[:lower:]')" in
     '' | 0 | off | false | no) log "/dev/shm: $(( have_bytes / 1048576 )) MiB."; return 0 ;;

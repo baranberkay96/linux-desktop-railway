@@ -173,3 +173,7 @@ Minimum plan: **Hobby.** Trial's 1 GB per service boots the desktop but Chromium
 - Railway's edge: `Host` kept as the public domain (needed by both Origin checks) and long-lived WebSockets (Selkies reconnects if the edge closes them).
 - Software-encoding CPU cost at Railway's shared vCPUs; the frame-rate default (60) may need lowering for some users.
 - The README Deploy button code `debian-13-xfce-linux-desktop-in-your-browser` is predicted from earlier publishes. Confirm after publishing.
+
+## Review follow-ups (2026-10-20)
+
+An independent read-only review found no critical issues. Applied: no Dockerfile `VOLUME` (Railway rejects it), nginx error log on stderr at `crit` only (failed-login lines could otherwise echo a mistyped password into Railway logs), passwords over 256 bytes refused (openssl truncates them), Selkies' own basic auth forced off, a failing `df` no longer aborts startup. Not applied: a basic-auth rate limit (Railway's edge hides the client IP, so a limit would be shared by everyone; the default 32-character generated password makes guessing impractical).
