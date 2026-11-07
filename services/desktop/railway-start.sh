@@ -8,7 +8,8 @@
 # PID 1 part itself and then runs the image's own stage 2 unchanged:
 #
 #  1. Checks PORT, CUSTOM_USER and PASSWORD. Without a password of at least
-#     12 characters it exits: this template never serves an open desktop.
+#     8 characters it exits: this template never serves an open desktop.
+#     An invalid login name falls back to the default instead of failing.
 #  2. Writes the nginx login file (SHA-512 crypt) and removes PASSWORD from
 #     the environment, so no service, desktop app or terminal can read it.
 #  3. Prepares /run like s6-overlay's preinit and saves the environment to
@@ -33,7 +34,8 @@ readonly SITE_SOURCES="/etc/s6-overlay/s6-rc.d"
 readonly OVERLAY_SOURCES="/package/admin/s6-overlay/etc/s6-rc/sources"
 readonly HTPASSWD_FILE="/etc/nginx/.htpasswd"
 readonly CONFIG_DIR="/config"
-readonly MIN_PASSWORD_LENGTH=12
+readonly MIN_PASSWORD_LENGTH=8
+readonly RECOMMENDED_PASSWORD_LENGTH=12
 readonly DEFAULT_PORT=3000
 readonly DEFAULT_HTTPS_PORT=3001
 readonly DEFAULT_WS_PORT=8082
@@ -77,15 +79,22 @@ validate_settings() {
   # nginx does the login; Selkies' own basic auth would need the password we remove before it starts.
   export SELKIES_ENABLE_BASIC_AUTH=false
 
+  # Names and passwords typed into the deploy form must not fail the deploy
+  # unless the desktop would be unsafe: a bad login name falls back to the
+  # default, and only an empty or very short password stops the start.
   CUSTOM_USER="${CUSTOM_USER:-$DEFAULT_USER}"
   if [[ ! "$CUSTOM_USER" =~ ^[A-Za-z0-9._@-]{1,64}$ ]]; then
-    die "CUSTOM_USER may only contain letters, digits and . _ @ - (1-64 characters)."
+    log "WARNING: CUSTOM_USER may only contain letters, digits and . _ @ - (1-64 characters). Signing in as '${DEFAULT_USER}' instead."
+    CUSTOM_USER="$DEFAULT_USER"
   fi
   export CUSTOM_USER
 
   PASSWORD="${PASSWORD:-}"
   if (( ${#PASSWORD} < MIN_PASSWORD_LENGTH )); then
     die "PASSWORD is empty or shorter than ${MIN_PASSWORD_LENGTH} characters. Set it in the service Variables. The desktop does not start without a password."
+  fi
+  if (( ${#PASSWORD} < RECOMMENDED_PASSWORD_LENGTH )); then
+    log "WARNING: PASSWORD has fewer than ${RECOMMENDED_PASSWORD_LENGTH} characters. The desktop is public and has sudo; use a longer password."
   fi
   if [[ "$PASSWORD" == *$'\n'* ]]; then
     die "PASSWORD must be a single line."

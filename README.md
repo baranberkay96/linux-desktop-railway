@@ -39,12 +39,12 @@ A browser desktop needs a virtual display, a desktop session, a streaming server
 
 1. Wait for the deploy to turn healthy (the first build pulls a 1.3 GB image, so allow a few minutes).
 2. Open the public URL. The browser asks for a login.
-3. User `debian` (or your `CUSTOM_USER`), password = `PASSWORD` from the service Variables tab.
+3. User `debian` (or your `CUSTOM_USER`; letters, digits and `. _ @ -` only, otherwise it stays `debian`), password = `PASSWORD` from the service Variables tab.
 4. The XFCE desktop appears and resizes to your browser window. The Selkies side menu has the clipboard box, file upload and download, audio, keyboard and display settings.
 
 **Security**
 
-- The desktop never runs without a login. Basic auth is on in nginx at build time, and the service refuses to start if `PASSWORD` is empty or shorter than 12 characters.
+- The desktop never runs without a login. Basic auth is on in nginx at build time, and the service refuses to start if `PASSWORD` is empty or shorter than 8 characters (use 12 or more).
 - Only a hash of the password is stored, and the password is removed from the environment before any desktop app starts.
 - Requests from other websites are refused (Origin check in nginx and Selkies), so a page you visit cannot use your cached login to drive the desktop or upload files.
 - The Linux user `abc` has passwordless sudo. Anyone with the password controls the whole container. Set `HARDEN_DESKTOP=true` to disable sudo, terminals and the open-with tools for a locked-down desktop.

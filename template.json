@@ -45,7 +45,7 @@
       "variables": {
         "PASSWORD": {
           "defaultValue": "${{secret(32)}}",
-          "description": "Browser login password, generated at deploy (copy it from this variable). Min 12 chars. The desktop does not start without it.",
+          "description": "Browser login password, generated at deploy (copy it from this variable). Min 8 chars, 12+ recommended. The desktop does not start without it.",
           "required": false
         },
         "CUSTOM_USER": {
