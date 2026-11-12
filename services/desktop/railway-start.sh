@@ -99,8 +99,8 @@ validate_settings() {
   export SELKIES_ENABLE_BASIC_AUTH=false
 
   # Names and passwords typed into the deploy form must not fail the deploy
-  # unless the desktop would be unsafe: a bad login name falls back to the
-  # default, and only an empty or very short password stops the start.
+  # or open the desktop: a bad login name falls back to the default, and an
+  # unusable password locks the login.
   CUSTOM_USER="${CUSTOM_USER:-$DEFAULT_USER}"
   if [[ ! "$CUSTOM_USER" =~ ^[A-Za-z0-9._@-]{1,64}$ ]]; then
     log "WARNING: CUSTOM_USER may only contain letters, digits and . _ @ - (1-64 characters). Signing in as '${DEFAULT_USER}' instead."
