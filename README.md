@@ -44,7 +44,7 @@ A browser desktop needs a virtual display, a desktop session, a streaming server
 
 **Security**
 
-- The desktop never runs without a login. Basic auth is on in nginx at build time, and the service refuses to start if `PASSWORD` is empty or shorter than 8 characters (use 12 or more).
+- The desktop never runs without a login. Basic auth is on in nginx at build time, and if `PASSWORD` is empty, shorter than 8 characters or longer than 256 bytes, the login is locked with a random password and the deploy log says so (use 12 or more characters).
 - Only a hash of the password is stored, and the password is removed from the environment before any desktop app starts.
 - Requests from other websites are refused (Origin check in nginx and Selkies), so a page you visit cannot use your cached login to drive the desktop or upload files.
 - The Linux user `abc` has passwordless sudo. Anyone with the password controls the whole container. Set `HARDEN_DESKTOP=true` to disable sudo, terminals and the open-with tools for a locked-down desktop.

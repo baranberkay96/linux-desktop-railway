@@ -80,7 +80,7 @@ Files in `services/desktop/`:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `PASSWORD` | `${{secret(32)}}` | Browser login. At least 8 characters and one line, otherwise the service exits with a clear log message; under 12 it starts with a warning in the logs. Only its SHA-512 crypt hash is kept; the variable is removed before any service starts. |
+| `PASSWORD` | `${{secret(32)}}` | Browser login. 8-256 bytes on one line. Otherwise the service still starts, but the login is locked with a random password nobody knows and the log says how to fix it; under 12 characters it starts with a warning. Only its SHA-512 crypt hash is kept; the variable is removed before any service starts. |
 | `CUSTOM_USER` | `debian` | Browser login name, `[A-Za-z0-9._@-]{1,64}`; anything else falls back to `debian` with a warning in the logs. The Linux account is always `abc`. |
 | `PORT` | `3000` | nginx listen port (copied to the image's `CUSTOM_PORT`). Rule 8.1: Railway's healthcheck probes it. Must differ from 3001 (internal HTTPS) and 8082 (Selkies). |
 | `TZ` | `Etc/UTC` | Time zone. |
@@ -94,7 +94,7 @@ Optional upstream variables that work unchanged (documented in README): `HARDEN_
 
 `railway-start` does what the PID 1 parts of s6-overlay would have done, then hands over to the image's own stage 2. Every upstream service definition, dependency and readiness rule is kept.
 
-1. **Validate** `PORT` (numeric, not 3001/8082), `CUSTOM_USER` (invalid → `debian`, logged), `PASSWORD` (≥ 8 characters, one line; warning under 12). Fail closed on the password: values typed into the deploy form should not fail the deploy otherwise, because failed deploys lower the marketplace health score.
+1. **Validate** `PORT`, `CUSTOM_HTTPS_PORT`, `CUSTOM_WS_PORT` (invalid or clashing → defaults 3000/3001/8082, logged), `CUSTOM_USER` (invalid → `debian`, logged), `PASSWORD` (8-256 bytes, one line, else the login is locked with a random password; warning under 12). No value typed into the deploy form fails the deploy, because failed deploys lower the marketplace health score; the password still fails closed.
 2. **Login file:** `openssl passwd -6 -stdin` → `/etc/nginx/.htpasswd` (root:www-data 0640). `PASSWORD`, `PASSWD` and `SELKIES_BASIC_AUTH_PASSWORD` are unset. Because the env dump below has no `PASSWORD`, `init-nginx` neither rewrites the login file nor strips `#` from the template.
 3. **Checks:** warns if `/config` is not a mounted volume; logs `/dev/shm` and tries to grow it to `DESKTOP_SHM_SIZE`; sets `DISABLE_IPV6=true` when the container has no IPv6 (otherwise nginx's `[::]` listener would fail).
 4. **preinit equivalent:** clears `/run/s6`, `/run/service`, `/run/s6-rc*`; creates them; adds `/run/s6/basedir/bin/halt` (→ `s6-svscanctl -t`) for scripts that stop the container the s6-overlay way.
@@ -162,7 +162,7 @@ Minimum plan: **Hobby.** Trial's 1 GB per service boots the desktop but Chromium
 - [ ] Chromium runs several tabs without "Aw, Snap!" (shared memory fallback). Note the `/dev/shm` size from the start log.
 - [ ] Persistence: create `~/Desktop/test.txt`, set a wallpaper, add `gimp` to `APT_PACKAGES`, redeploy. The file and wallpaper remain, and the log shows `Packages restored.`
 - [ ] Redeploy log shows `Received SIGTERM: stopping the desktop.` and the old deployment stops within 15 s.
-- [ ] Set `PASSWORD` to `short` and redeploy: the deploy fails with the "PASSWORD is empty or shorter than 8 characters" line and nothing listens.
+- [ ] Set `PASSWORD` to `short` and redeploy: the deploy succeeds, the log shows "PASSWORD is empty or shorter than 8 characters … login is locked", and every page except `/healthz` answers 401 to any password.
 
 ## Open questions
 
@@ -176,4 +176,4 @@ Minimum plan: **Hobby.** Trial's 1 GB per service boots the desktop but Chromium
 
 ## Review follow-ups (2026-10-20)
 
-An independent read-only review found no critical issues. Applied: no Dockerfile `VOLUME` (Railway rejects it), nginx error log on stderr at `crit` only (failed-login lines could otherwise echo a mistyped password into Railway logs), passwords over 256 bytes refused (openssl truncates them), Selkies' own basic auth forced off, a failing `df` no longer aborts startup. Not applied: a basic-auth rate limit (Railway's edge hides the client IP, so a limit would be shared by everyone; the default 32-character generated password makes guessing impractical).
+An independent read-only review found no critical issues. Applied: no Dockerfile `VOLUME` (Railway rejects it), nginx error log on stderr at `crit` only (failed-login lines could otherwise echo a mistyped password into Railway logs), passwords over 256 bytes not applied (openssl truncates them), Selkies' own basic auth forced off, a failing `df` no longer aborts startup. Not applied: a basic-auth rate limit (Railway's edge hides the client IP, so a limit would be shared by everyone; the default 32-character generated password makes guessing impractical).

@@ -7,9 +7,10 @@
 # s6-svscan and s6-rc themselves do not need PID 1, so this script does the
 # PID 1 part itself and then runs the image's own stage 2 unchanged:
 #
-#  1. Checks PORT, CUSTOM_USER and PASSWORD. Without a password of at least
-#     8 characters it exits: this template never serves an open desktop.
-#     An invalid login name falls back to the default instead of failing.
+#  1. Checks PORT, CUSTOM_USER and PASSWORD. No variable fails the deploy:
+#     invalid ports and login names fall back to the defaults, and without a
+#     usable password (8-256 bytes, one line) the login is locked with a
+#     random password nobody knows. This template never serves an open desktop.
 #  2. Writes the nginx login file (SHA-512 crypt) and removes PASSWORD from
 #     the environment, so no service, desktop app or terminal can read it.
 #  3. Prepares /run like s6-overlay's preinit and saves the environment to
@@ -61,17 +62,35 @@ is_port() {
   [[ "$1" =~ ^[1-9][0-9]{0,4}$ ]] && (( $1 <= 65535 ))
 }
 
+# A failed start leaves the user with a dead deploy, so unusable values are
+# replaced by safe ones with a warning instead.
+lock_login() {
+  log "WARNING: $* The login is locked until you fix PASSWORD in the service Variables and redeploy."
+  PASSWORD="$(openssl rand -hex 32)"
+}
+
 validate_settings() {
   local https_port="${CUSTOM_HTTPS_PORT:-$DEFAULT_HTTPS_PORT}"
   local ws_port="${CUSTOM_WS_PORT:-$DEFAULT_WS_PORT}"
 
   PORT="${PORT:-$DEFAULT_PORT}"
-  is_port "$PORT" || die "PORT must be a number between 1 and 65535 (got '${PORT}')."
-  is_port "$https_port" || die "CUSTOM_HTTPS_PORT must be a port number (got '${https_port}')."
-  is_port "$ws_port" || die "CUSTOM_WS_PORT must be a port number (got '${ws_port}')."
-  if (( PORT == https_port || PORT == ws_port )); then
-    die "PORT ${PORT} is used internally (HTTPS ${https_port}, Selkies ${ws_port}). Pick another port."
+  if ! is_port "$PORT"; then
+    log "WARNING: PORT must be a number between 1 and 65535 (got '${PORT}'). Using ${DEFAULT_PORT}."
+    PORT="$DEFAULT_PORT"
   fi
+  if ! is_port "$https_port"; then
+    log "WARNING: CUSTOM_HTTPS_PORT must be a port number (got '${https_port}'). Using ${DEFAULT_HTTPS_PORT}."
+    https_port="$DEFAULT_HTTPS_PORT"
+  fi
+  if ! is_port "$ws_port"; then
+    log "WARNING: CUSTOM_WS_PORT must be a port number (got '${ws_port}'). Using ${DEFAULT_WS_PORT}."
+    ws_port="$DEFAULT_WS_PORT"
+  fi
+  if (( PORT == https_port || PORT == ws_port || https_port == ws_port )); then
+    log "WARNING: PORT ${PORT}, CUSTOM_HTTPS_PORT ${https_port} and CUSTOM_WS_PORT ${ws_port} must differ. Using ${DEFAULT_PORT}, ${DEFAULT_HTTPS_PORT} and ${DEFAULT_WS_PORT}."
+    PORT="$DEFAULT_PORT" https_port="$DEFAULT_HTTPS_PORT" ws_port="$DEFAULT_WS_PORT"
+  fi
+  export CUSTOM_HTTPS_PORT="$https_port" CUSTOM_WS_PORT="$ws_port"
   if [[ -n "${CUSTOM_PORT:-}" && "${CUSTOM_PORT}" != "$PORT" ]]; then
     log "CUSTOM_PORT=${CUSTOM_PORT} is ignored: nginx listens on PORT=${PORT}, the port Railway routes to."
   fi
@@ -91,17 +110,14 @@ validate_settings() {
 
   PASSWORD="${PASSWORD:-}"
   if (( ${#PASSWORD} < MIN_PASSWORD_LENGTH )); then
-    die "PASSWORD is empty or shorter than ${MIN_PASSWORD_LENGTH} characters. Set it in the service Variables. The desktop does not start without a password."
-  fi
-  if (( ${#PASSWORD} < RECOMMENDED_PASSWORD_LENGTH )); then
-    log "WARNING: PASSWORD has fewer than ${RECOMMENDED_PASSWORD_LENGTH} characters. The desktop is public and has sudo; use a longer password."
-  fi
-  if [[ "$PASSWORD" == *$'\n'* ]]; then
-    die "PASSWORD must be a single line."
-  fi
+    lock_login "PASSWORD is empty or shorter than ${MIN_PASSWORD_LENGTH} characters."
+  elif [[ "$PASSWORD" == *$'\n'* ]]; then
+    lock_login "PASSWORD must be a single line."
   # openssl passwd silently truncates input longer than 256 bytes; count bytes, not characters.
-  if (( $(printf '%s' "$PASSWORD" | wc -c) > 256 )); then
-    die "PASSWORD is longer than 256 bytes. Use a shorter password."
+  elif (( $(printf '%s' "$PASSWORD" | wc -c) > 256 )); then
+    lock_login "PASSWORD is longer than 256 bytes."
+  elif (( ${#PASSWORD} < RECOMMENDED_PASSWORD_LENGTH )); then
+    log "WARNING: PASSWORD has fewer than ${RECOMMENDED_PASSWORD_LENGTH} characters. The desktop is public and has sudo; use a longer password."
   fi
 
   # init-nginx removes the IPv6 listener only when DISABLE_IPV6 is set.
