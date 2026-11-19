@@ -1,6 +1,6 @@
 # Deploy and Host Debian 13 XFCE Desktop with Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/debian-13-xfce-linux-desktop-in-your-browser?referralCode=20H68q)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/debian-13-xfce-linux-desktop-in-your-bro?referralCode=20H68q)
 
 A full Debian 13 (trixie) desktop with XFCE that you open in a browser tab. It comes with Chromium, a file manager, a terminal and a text editor. A generated password protects it, and your home directory (files, settings, browser profile) lives on a persistent volume.
 
