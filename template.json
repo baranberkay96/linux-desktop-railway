@@ -17,7 +17,7 @@
     "repo": "linuxserver/docker-webtop",
     "branch": "debian-xfce",
     "version": "eb802092-ls217",
-    "image": "lscr.io/linuxserver/webtop:debian-xfce-eb802092-ls217@sha256:d925f9c84663fe57735be4defe95a338d32bc37f2e12b9e0f0981e91b6bd0a5d",
+    "image": "ghcr.io/linuxserver/webtop:debian-xfce-eb802092-ls217@sha256:d925f9c84663fe57735be4defe95a338d32bc37f2e12b9e0f0981e91b6bd0a5d",
     "base": "ghcr.io/linuxserver/baseimage-selkies:debiantrixie (Selkies 2.0.0, s6-overlay 3.2.1.0)",
     "checked": "2026-10-20"
   },

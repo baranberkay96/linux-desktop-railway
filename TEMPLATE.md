@@ -24,14 +24,14 @@ How the description is delivered: "Full Debian desktop": XFCE session with Chrom
 
 | Component | Version | Source | Checked |
 |---|---|---|---|
-| Base image | `lscr.io/linuxserver/webtop:debian-xfce-eb802092-ls217@sha256:d925f9c84663fe57735be4defe95a338d32bc37f2e12b9e0f0981e91b6bd0a5d` (built 2026-10-13, newest debian-xfce release on 2026-10-20) | Same digest on Docker Hub `linuxserver/webtop`, `ghcr.io/linuxserver/webtop` and `lscr.io` | 2026-10-20 |
+| Base image | `ghcr.io/linuxserver/webtop:debian-xfce-eb802092-ls217@sha256:d925f9c84663fe57735be4defe95a338d32bc37f2e12b9e0f0981e91b6bd0a5d` (built 2026-10-13, newest debian-xfce release on 2026-10-20) | Same digest on Docker Hub `linuxserver/webtop`, `ghcr.io/linuxserver/webtop` and `lscr.io` | 2026-10-20 |
 | Debian | 13 "trixie" (baseimage-debian `REL=trixie`) | linuxserver/docker-baseimage-debian | 2026-10-20 |
 | XFCE | 4.20 (xfce4-session 4.20.2-2) | Debian trixie | 2026-10-20 |
 | Selkies | 2.0.0 (2026-09-23) | baseimage-selkies `SELKIES_RELEASE` | 2026-10-20 |
 | s6-overlay | 3.2.1.0 (s6 2.13.2.0, s6-rc 0.5.6.0, s6-linux-init 1.1.3.0) | baseimage-debian `S6_OVERLAY_VERSION`, files listed in image layer 0 | 2026-10-20 |
 | nginx | 1.26.3 (Debian trixie) | Debian package | 2026-10-20 |
 
-The tag and digest are on the `FROM` line of `services/desktop/Dockerfile`. If lscr.io is unreachable during a build, `ghcr.io/linuxserver/webtop` with the same tag and digest is equivalent.
+The tag and digest are on the `FROM` line of `services/desktop/Dockerfile`. The build pulls it from ghcr.io directly; `lscr.io/linuxserver/webtop` with the same tag and digest is the same image.
 
 ## Architecture
 

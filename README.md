@@ -17,7 +17,7 @@ A browser desktop needs a virtual display, a desktop session, a streaming server
 
 ## Dependencies for Debian 13 XFCE Desktop Hosting
 
-- One service built from a small Dockerfile on top of `lscr.io/linuxserver/webtop` (no database, no external API keys)
+- One service built from a small Dockerfile on top of `ghcr.io/linuxserver/webtop` (linuxserver.io) (no database, no external API keys)
 - A Railway volume mounted at `/config` for the home directory
 
 ### Deployment Dependencies
